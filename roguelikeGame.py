@@ -1,10 +1,11 @@
 import pyglet
 from pyglet.window import mouse
 from pyglet.window import key
+from pyglet.gl import glViewport
 import os
 from math import sqrt,floor,ceil
 import numpy as np
-
+pyglet.options['dpi_scaling'] = 'real'
 #####STUFF TO BE CHANGED OR AT LEAST REVIEWED WILL BE COMMENTED AS 'JANK'
 
 class player:
@@ -28,6 +29,7 @@ class player:
         energyGenRate: float = 0.8,             #ditto
         maxEnergy: float = 3,                   #ditto
         currentHp: int = 1,                     #if i want to do similar to sts ancient set to 1 and increase but for now idm
+        refCoords: list[int] = [0,0],           #needs to be set dependent on room
     ):
         self.maxHp = maxHp
         self.currentHp = currentHp
@@ -46,9 +48,15 @@ class player:
         self.startCombatProcesses = startCombatProcesses
         self.endCombatProcesses = endCombatProcesses
         self.enterFloorProcesses = enterFloorProcesses
-        self.moveProcesses = [self.checkMoveLegality]
-    def checkMoveLegality(self):
+        self.moveProcesses = [self.move]
+        self.moveProcessesDirections: list[int] = []                   #When hovering a card save the directions of the movements here, 0,1,2,3,4,5
+        self.refCoords = refCoords
+    def move(self,directions:list[int],movespeed: int=1):              #use directions=self.moveProcessesDirections most of the time if not always
+        
+
         pass
+
+
 
 
     
@@ -80,7 +88,7 @@ class map:
 
 currentState='menu'
 def initializeMenu():
-    characterHover='dia'
+    characterHover='dia'                    #dia is a filler name
     #display everything that needs to be displayed on the screen
     pass
 
@@ -119,7 +127,7 @@ def gameLoop():
     pass
 
 
-def initalizeGrids(nInRow,nInCol,xPixDisplacement=1,yPixDisplacement=sqrt(3/2)):
+def initalizeGrids(nInRow,nInCol,xPixDisplacement=1,yPixDisplacement=sqrt(3)/2):
     #nInRow is number of normal hex in a row
     #nInCol is number of normal hex in a column
     #setup all the points with coordinates, size, and 6 output locations
@@ -345,7 +353,7 @@ def changePathsForSmall(grid, adjacency, xRefCoord, yRefCoord, normalCoordToInde
 ####Recieve mouse inputs, highlight hovered hex and set it so i can click a hex to turn it from normal to small
 
 def initializeWindow(x,y):
-    window = pyglet.window.Window(width=x, height=y)
+    window = pyglet.window.Window(width=x, height=y, resizable=True)
     return window
 
 def initializeHexGraphics(grid,inPlay,sideLength):                                                         #####Update this to work with any set of hexes, with variations for level
@@ -451,9 +459,11 @@ def hexHitbox(xPixCoordReal,yPixCoordReal,targettingType,grid,normalCoordToIndex
 numInRow=5
 numInCol=6
 sideLength=119
-xWindowSize=int(sideLength*(numInRow*1.5+0.25))
-yWindowSize=int(103*(numInCol+0.5))
+xWindowSize=int(sideLength*(numInRow*1.5+0.25))*2
+yWindowSize=int(103*(numInCol+0.5))*2
 window=initializeWindow(xWindowSize,yWindowSize)
+print(xWindowSize,yWindowSize)
+print(window.width, window.height)
 grid, adjacency, normalCoordToIndex, smallCoordToIndex, inPlay = initalizeGrids(5,6)
 hexes, backgroundBatch = initializeHexGraphics(grid, inPlay, 119)
 #hexes[1,(8,-3.5)].visbile=True
@@ -462,6 +472,12 @@ hexes, backgroundBatch = initializeHexGraphics(grid, inPlay, 119)
 def on_draw():
     window.clear()
     backgroundBatch.draw()
+
+@window.event
+def on_resize(width, height):
+    # Use framebuffer size for the physical rendering area
+    fb_width, fb_height = window.get_framebuffer_size()
+    glViewport(0, 0, fb_width, fb_height)
 
 
 @window.event
