@@ -2,6 +2,7 @@ import pyglet
 from pyglet.window import mouse
 from pyglet.window import key
 from pyglet.gl import glViewport
+from pyglet.math import Mat4
 import os
 from math import sqrt,floor,ceil
 import numpy as np
@@ -455,15 +456,15 @@ def hexHitbox(xPixCoordReal,yPixCoordReal,targettingType,grid,normalCoordToIndex
     return hitIndex
         
 
+###TESTING
 
 numInRow=5
 numInCol=6
 sideLength=119
-xWindowSize=int(sideLength*(numInRow*1.5+0.25))*2
-yWindowSize=int(103*(numInCol+0.5))*2
-window=initializeWindow(xWindowSize,yWindowSize)
-print(xWindowSize,yWindowSize)
-print(window.width, window.height)
+logicalXSize=int(sideLength*(numInRow*1.5+0.25))*2
+logicalYSize=int(103*(numInCol+0.5))*2
+logicalAspectRatio=logicalXSize/logicalYSize
+window=initializeWindow(logicalXSize,logicalYSize)
 grid, adjacency, normalCoordToIndex, smallCoordToIndex, inPlay = initalizeGrids(5,6)
 hexes, backgroundBatch = initializeHexGraphics(grid, inPlay, 119)
 #hexes[1,(8,-3.5)].visbile=True
@@ -475,9 +476,27 @@ def on_draw():
 
 @window.event
 def on_resize(width, height):
-    # Use framebuffer size for the physical rendering area
-    fb_width, fb_height = window.get_framebuffer_size()
-    glViewport(0, 0, fb_width, fb_height)
+    windowAspectRatio = width / height
+    
+    if windowAspectRatio > logicalAspectRatio:
+        # Window is wider than game -> Pillarboxes (bars on left/right)
+        viewHeight = height
+        viewWidth = int(height * logicalAspectRatio)
+        viewX = (width - viewWidth) // 2
+        viewY = 0
+    else:
+        # Window is taller than game -> Letterboxes (bars on top/bottom)
+        viewWidth = width
+        viewHeight = int(width / logicalAspectRatio)
+        viewX = 0
+        viewY = (height - viewHeight) // 2
+
+    # 2. Apply the centered viewport bounding box
+    window.viewport = (viewX, viewY, viewWidth, viewHeight)
+    
+    # 3. Apply the 800x600 logical coordinate projection matrix
+    window.projection = Mat4.orthogonal_projection(0, logicalXSize, 0, logicalYSize, -1, 1)
+    
 
 
 @window.event
