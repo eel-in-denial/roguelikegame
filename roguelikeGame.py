@@ -475,3 +475,4 @@ def on_mouse_press(x, y, button, modifiers):
     #print(grid[hitIndex,2][0]*sideLength,grid[hitIndex,2][1]*sideLength)
 
 pyglet.app.run(1/120)
+
