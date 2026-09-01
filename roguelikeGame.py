@@ -9,6 +9,45 @@ import numpy as np
 #####STUFF TO BE CHANGED OR AT LEAST REVIEWED WILL BE COMMENTED AS 'JANK'
 
 class player:
+        
+    def __init__(
+        self,                                   #lots of this info will be packaged into character arrays that get passed in, other modifiers will be hit by difficulty levels
+        maxHp: int,                             #maxHp, character stuff (difficulty modified)
+        materials: list[int],                   #materials, starts with a lil smth smth random for good luck
+        relics: list[str],                      #character stuff
+        deck: list[str],                        #character stuff, difficulty modifier (backpack?)
+        drawPile: list[str],                    #empty list that gets made at start of combat
+        hand: list[str],                        #ditto
+        stack: list[str],                       #ditto
+        discardPile: list[str],                 #ditto
+        startCombatProcesses: list[str],        #Package all the functions i want to run at the start of a combat   eg. initialize draw pile etc, heal 2 ;), setup position on map, Note: only player stuff
+        endCombatProcesses: list[str],          #ditto      eg. generate rewards, heal 6 ;)
+        enterFloorProcesses: list[str],         #ditto      eg. if entering shop heal, if entering campfire heal, check type of floor 
+        turnNumber: int = 0,                    #Will be rechecked at start of combat
+        drawHandSize: int = 5,                  #ditto
+        maxHandSize: int = 11,                  #ditto
+        energyGenRate: float = 0.8,             #ditto
+        maxEnergy: float = 3,                   #ditto
+        currentHp: int = 1,                     #if i want to do similar to sts ancient set to 1 and increase but for now idm
+    ):
+        self.maxHp = maxHp
+        self.currentHp = currentHp
+        self.materials = materials
+        self.relics = relics
+        self.turnNumber = turnNumber
+        self.deck = deck
+        self.drawPile = drawPile
+        self.hand = hand
+        self.stack = stack
+        self.discardPile = discardPile
+        self.drawHandSize = drawHandSize
+        self.maxHandSize = maxHandSize
+        self.energyGenRate = energyGenRate
+        self.maxEnergy = maxEnergy
+        self.startCombatProcesses = startCombatProcesses
+        self.endCombatProcesses = endCombatProcesses
+        self.enterFloorProcesses = enterFloorProcesses
+
     #what do i need
     ######CARD STUFF
     #card class arrays deck, draw pile, hand, stack? (currently playing cards), discard pile,  stack? (may as well implement this even if not planning on needing because gives options)
@@ -16,13 +55,19 @@ class player:
     #hp, materials, relics
     ######IN FIGHT STUFF
     #card stuff*, energy, turn number
-    
+
     pass
 
 class enemy:
     pass
 
 class card:
+    pass
+
+class game:
+    pass
+
+class map:
     pass
 
 currentState='menu'
@@ -103,8 +148,7 @@ def initalizeGrids(nInRow,nInCol,xPixDisplacement=1,yPixDisplacement=sqrt(3/2)):
                                                 ########################################################
                                                 #####IMPORTANT THIS IS CONVERSION FROM REF TO PIXEL#####
                                                 ########################################################
-            xPixCoord=xPixDisplacement+xRefCoord*3/2
-            yPixCoord=yPixDisplacement+yRefCoord*sqrt(3)+xRefCoord*sqrt(3)/2
+            xPixCoord, yPixCoord = convRefToPix(xRefCoord,yRefCoord,xPixDisplacement,yPixDisplacement)
 
                                                 #####Default Ouput Locations. Note: Some of these locations don't exist but that will be handled later
             upOutputLoc=(xRefCoord+0,yRefCoord-1)
@@ -152,8 +196,8 @@ def initalizeGrids(nInRow,nInCol,xPixDisplacement=1,yPixDisplacement=sqrt(3/2)):
             yRefCoord=(j-ceil(i/2))/2           #####Changed to ceil, check reference doc
 
                                                 #####Conversion remains the same
-            xPixCoord=1+xRefCoord*3/2
-            yPixCoord=sqrt(3)/2+yRefCoord*sqrt(3)+xRefCoord*sqrt(3)/2
+            xPixCoord, yPixCoord = convRefToPix(xRefCoord,yRefCoord, xPixDisplacement, yPixDisplacement)
+
 
                                                 #####Default Ouput Locations. Note: Some of these locations don't exist but that will be handled later
                                                 #####Scaled to 1/2
@@ -326,9 +370,22 @@ def initializeHexGraphics(grid,inPlay,sideLength):                              
 
     return hexes, backgroundBatch
 
-def hexHitbox(xPixCoord,yPixCoord,targettingType,grid,normalCoordToIndex,smallCoordToIndex,inPlay,sideLength,xPixDisplacement=1,yPixDisplacement=sqrt(3/2)):             #targettingTypes -> normal (target normal hexes only) -> small (target small hexes only) -> in play (target in play hexes (prio small over normal))
-    xRefCoord=2/3*((xPixCoord/sideLength)-xPixDisplacement)
-    yRefCoord=(yPixCoord/sideLength)/sqrt(3)-yPixDisplacement/sqrt(3)-1/3*((xPixCoord/sideLength)-xPixDisplacement)
+                ###CONVERSIONS
+
+def convRefToPix(xRefCoord,yRefCoord,xPixDisplacement,yPixDisplacement):
+    xPixCoord=xPixDisplacement+xRefCoord*3/2
+    yPixCoord=yPixDisplacement+yRefCoord*sqrt(3)+xRefCoord*sqrt(3)/2
+    return xPixCoord, yPixCoord
+
+def convPixToRef(xPixCoord,yPixCoord,xPixDisplacement,yPixDisplacement):
+    xRefCoord=2/3*((xPixCoord)-xPixDisplacement)
+    yRefCoord=(yPixCoord)/sqrt(3)-yPixDisplacement/sqrt(3)-1/3*((xPixCoord)-xPixDisplacement)
+    return xRefCoord, yRefCoord
+
+def hexHitbox(xPixCoordReal,yPixCoordReal,targettingType,grid,normalCoordToIndex,smallCoordToIndex,inPlay,sideLength,xPixDisplacement=1,yPixDisplacement=sqrt(3/2)):             #targettingTypes -> normal (target normal hexes only) -> small (target small hexes only) -> in play (target in play hexes (prio small over normal))
+    xPixCoord=xPixCoordReal/sideLength
+    yPixCoord=yPixCoordReal/sideLength
+    xRefCoord, yRefCoord = convPixToRef (xPixCoord, yPixCoord, xPixDisplacement, yPixDisplacement)
     print(xRefCoord,yRefCoord)
     hitIndex=-1
 
@@ -338,7 +395,7 @@ def hexHitbox(xPixCoord,yPixCoord,targettingType,grid,normalCoordToIndex,smallCo
         for i in candidateRefCoords:
             if i in normalCoordToIndex:
                 index=normalCoordToIndex[i]
-                currentScore=(xPixCoord/sideLength-grid[index,2][0])**2+(yPixCoord/sideLength-grid[index,2][1])**2
+                currentScore=(xPixCoord-grid[index,2][0])**2+(yPixCoord-grid[index,2][1])**2
                 if currentScore<score:
                     hitIndex=index
                     score=currentScore
@@ -350,7 +407,7 @@ def hexHitbox(xPixCoord,yPixCoord,targettingType,grid,normalCoordToIndex,smallCo
         for i in candidateRefCoords:
             if i in smallCoordToIndex:
                 index=smallCoordToIndex[i]
-                currentScore=(xPixCoord/sideLength-grid[index,2][0])**2+(yPixCoord/sideLength-grid[index,2][1])**2
+                currentScore=(xPixCoord-grid[index,2][0])**2+(yPixCoord-grid[index,2][1])**2
                 if currentScore<score:
                     hitIndex=index
                     score=currentScore
@@ -363,7 +420,7 @@ def hexHitbox(xPixCoord,yPixCoord,targettingType,grid,normalCoordToIndex,smallCo
             if (i in normalCoordToIndex):
                 index=normalCoordToIndex[i]
                 if index in inPlay:
-                    currentScore=(xPixCoord/sideLength-grid[index,2][0])**2+(yPixCoord/sideLength-grid[index,2][1])**2
+                    currentScore=(xPixCoord - grid[index,2][0])**2+(yPixCoord - grid[index,2][1])**2
                     ####print(currentScore,i)
                     if currentScore<score:
                         hitIndex=index
@@ -373,7 +430,7 @@ def hexHitbox(xPixCoord,yPixCoord,targettingType,grid,normalCoordToIndex,smallCo
             if i in smallCoordToIndex:
                 index=smallCoordToIndex[i]
                 if index in inPlay:
-                    currentScore=(xPixCoord/sideLength-grid[index,2][0])**2+(yPixCoord/sideLength-grid[index,2][1])**2
+                    currentScore=(xPixCoord - grid[index,2][0])**2+(yPixCoord - grid[index,2][1])**2
                     if currentScore<score:
                         hitIndex=index
                         score=currentScore
