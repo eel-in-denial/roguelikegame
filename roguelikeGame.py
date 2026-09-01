@@ -1,7 +1,6 @@
 import pyglet
 from pyglet.window import mouse
 from pyglet.window import key
-from PIL import Image
 import os
 from math import sqrt,floor,ceil
 import numpy as np
@@ -20,9 +19,9 @@ class player:
         hand: list[str],                        #ditto
         stack: list[str],                       #ditto
         discardPile: list[str],                 #ditto
-        startCombatProcesses: list[str],        #Package all the functions i want to run at the start of a combat   eg. initialize draw pile etc, heal 2 ;), setup position on map, Note: only player stuff
-        endCombatProcesses: list[str],          #ditto      eg. generate rewards, heal 6 ;)
-        enterFloorProcesses: list[str],         #ditto      eg. if entering shop heal, if entering campfire heal, check type of floor 
+        startCombatProcesses,                   #Package all the functions i want to run at the start of a combat   eg. initialize draw pile etc, heal 2 ;), setup position on map, Note: only player stuff
+        endCombatProcesses,                     #ditto      eg. generate rewards, heal 6 ;)
+        enterFloorProcesses,                    #ditto      eg. if entering shop heal, if entering campfire heal, check type of floor 
         turnNumber: int = 0,                    #Will be rechecked at start of combat
         drawHandSize: int = 5,                  #ditto
         maxHandSize: int = 11,                  #ditto
@@ -47,7 +46,12 @@ class player:
         self.startCombatProcesses = startCombatProcesses
         self.endCombatProcesses = endCombatProcesses
         self.enterFloorProcesses = enterFloorProcesses
+        self.moveProcesses = [self.checkMoveLegality]
+    def checkMoveLegality(self):
+        pass
 
+
+    
     #what do i need
     ######CARD STUFF
     #card class arrays deck, draw pile, hand, stack? (currently playing cards), discard pile,  stack? (may as well implement this even if not planning on needing because gives options)
@@ -55,20 +59,24 @@ class player:
     #hp, materials, relics
     ######IN FIGHT STUFF
     #card stuff*, energy, turn number
-
     pass
+
 
 class enemy:
     pass
 
+
 class card:
     pass
+
 
 class game:
     pass
 
+
 class map:
     pass
+
 
 currentState='menu'
 def initializeMenu():
@@ -443,8 +451,9 @@ def hexHitbox(xPixCoordReal,yPixCoordReal,targettingType,grid,normalCoordToIndex
 numInRow=5
 numInCol=6
 sideLength=119
-
-window=initializeWindow(sideLength*(numInRow*1.5+0.25),103*(numInCol+0.5))
+xWindowSize=int(sideLength*(numInRow*1.5+0.25))
+yWindowSize=int(103*(numInCol+0.5))
+window=initializeWindow(xWindowSize,yWindowSize)
 grid, adjacency, normalCoordToIndex, smallCoordToIndex, inPlay = initalizeGrids(5,6)
 hexes, backgroundBatch = initializeHexGraphics(grid, inPlay, 119)
 #hexes[1,(8,-3.5)].visbile=True
@@ -466,5 +475,4 @@ def on_mouse_press(x, y, button, modifiers):
     #print(grid[hitIndex,2][0]*sideLength,grid[hitIndex,2][1]*sideLength)
 
 pyglet.app.run(1/120)
-
 
