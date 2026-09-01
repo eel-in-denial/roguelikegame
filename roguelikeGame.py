@@ -85,9 +85,20 @@ class game:
 class map:
     pass
 
+def initializeEverything():
+    window=initializeWindow(xWindowSize,yWindowSize)
+    initializeMenu()
 
-currentState='menu'
 def initializeMenu():
+    batch = pyglet.graphics.Batch()
+    rect = pyglet.shapes.Rectangle(
+        x=200, 
+        y=150, 
+        width=240, 
+        height=180, 
+        color=(55, 55, 255),  # RGB Blue
+        batch=batch
+    )
     characterHover='dia'                    #dia is a filler name
     #display everything that needs to be displayed on the screen
     pass
@@ -454,14 +465,14 @@ def hexHitbox(xPixCoordReal,yPixCoordReal,targettingType,grid,normalCoordToIndex
 
     return hitIndex
         
-
+initializeEverything()
 
 numInRow=5
 numInCol=6
 sideLength=119
 xWindowSize=int(sideLength*(numInRow*1.5+0.25))*2
 yWindowSize=int(103*(numInCol+0.5))*2
-window=initializeWindow(xWindowSize,yWindowSize)
+
 print(xWindowSize,yWindowSize)
 print(window.width, window.height)
 grid, adjacency, normalCoordToIndex, smallCoordToIndex, inPlay = initalizeGrids(5,6)
@@ -472,6 +483,7 @@ hexes, backgroundBatch = initializeHexGraphics(grid, inPlay, 119)
 def on_draw():
     window.clear()
     backgroundBatch.draw()
+    batch.draw()
 
 @window.event
 def on_resize(width, height):
