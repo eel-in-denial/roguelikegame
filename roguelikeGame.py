@@ -468,6 +468,8 @@ window=initializeWindow(logicalXSize,logicalYSize)
 grid, adjacency, normalCoordToIndex, smallCoordToIndex, inPlay = initalizeGrids(5,6)
 hexes, backgroundBatch = initializeHexGraphics(grid, inPlay, 119)
 #hexes[1,(8,-3.5)].visbile=True
+screenOffset: list[int] = [0,0,1]
+
 
 @window.event
 def on_draw():
@@ -484,25 +486,33 @@ def on_resize(width, height):
         viewWidth = int(height * logicalAspectRatio)
         viewX = (width - viewWidth) // 2
         viewY = 0
+        screenOffset[2] = height/logicalYSize
+
     else:
         # Window is taller than game -> Letterboxes (bars on top/bottom)
         viewWidth = width
         viewHeight = int(width / logicalAspectRatio)
         viewX = 0
         viewY = (height - viewHeight) // 2
+        screenOffset[2] = width/logicalXSize
 
     # 2. Apply the centered viewport bounding box
     window.viewport = (viewX, viewY, viewWidth, viewHeight)
+    screenOffset[0] = viewX
+    screenOffset[1] = viewY
+
     
     # 3. Apply the 800x600 logical coordinate projection matrix
     window.projection = Mat4.orthogonal_projection(0, logicalXSize, 0, logicalYSize, -1, 1)
+    return screenOffset
     
 
 
 @window.event
 def on_mouse_press(x, y, button, modifiers):
     print(x,y)
-    hitIndex=hexHitbox(x,y,'normal',grid,normalCoordToIndex,smallCoordToIndex,inPlay,sideLength)
+    print((x-screenOffset[0])/screenOffset[2],(y-screenOffset[1])/screenOffset[2])
+    hitIndex=hexHitbox((x-screenOffset[0])/screenOffset[2],(y-screenOffset[1])/screenOffset[2],'normal',grid,normalCoordToIndex,smallCoordToIndex,inPlay,sideLength)
     if hitIndex==-1:
         print("Not in grid")
     else:
